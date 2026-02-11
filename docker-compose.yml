@@ -1,19 +1,59 @@
 version: "3.9"
 
+x-common-env: &common-env
+  DB_DSN: "host=postgres user=youtube password=youtube dbname=youtube port=5432 sslmode=disable"
+  REDIS_ADDR: "redis:6379"
+  JWT_SECRET: "dev-secret-change-in-production"
+
 x-go-service: &go-service
   image: golang:1.24
   working_dir: /app
   volumes:
     - ./:/app
-  command: ["go", "run", "./services/identity/cmd"]
+    - go-mod-cache:/go/pkg/mod
+    - go-build-cache:/root/.cache/go-build
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: youtube
+      POSTGRES_PASSWORD: youtube
+      POSTGRES_DB: youtube
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U youtube"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   identity:
     <<: *go-service
     command: ["go", "run", "./services/identity/cmd"]
     environment:
-      - PORT=8001
-      - SERVICE_NAME=identity-service
+      <<: *common-env
+      PORT: 8001
+      SERVICE_NAME: identity-service
     ports:
       - "8001:8001"
 
@@ -21,8 +61,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/user-channel/cmd"]
     environment:
-      - PORT=8002
-      - SERVICE_NAME=user-channel-service
+      <<: *common-env
+      PORT: 8002
+      SERVICE_NAME: user-channel-service
     ports:
       - "8002:8002"
 
@@ -30,8 +71,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/video/cmd"]
     environment:
-      - PORT=8003
-      - SERVICE_NAME=video-service
+      <<: *common-env
+      PORT: 8003
+      SERVICE_NAME: video-service
     ports:
       - "8003:8003"
 
@@ -39,8 +81,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/media/cmd"]
     environment:
-      - PORT=8004
-      - SERVICE_NAME=media-service
+      <<: *common-env
+      PORT: 8004
+      SERVICE_NAME: media-service
     ports:
       - "8004:8004"
 
@@ -48,8 +91,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/social-graph/cmd"]
     environment:
-      - PORT=8005
-      - SERVICE_NAME=social-graph-service
+      <<: *common-env
+      PORT: 8005
+      SERVICE_NAME: social-graph-service
     ports:
       - "8005:8005"
 
@@ -57,8 +101,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/feed-reco/cmd"]
     environment:
-      - PORT=8006
-      - SERVICE_NAME=feed-reco-service
+      <<: *common-env
+      PORT: 8006
+      SERVICE_NAME: feed-reco-service
     ports:
       - "8006:8006"
 
@@ -66,8 +111,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/comment/cmd"]
     environment:
-      - PORT=8007
-      - SERVICE_NAME=comment-service
+      <<: *common-env
+      PORT: 8007
+      SERVICE_NAME: comment-service
     ports:
       - "8007:8007"
 
@@ -75,8 +121,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/live/cmd"]
     environment:
-      - PORT=8008
-      - SERVICE_NAME=live-service
+      <<: *common-env
+      PORT: 8008
+      SERVICE_NAME: live-service
     ports:
       - "8008:8008"
 
@@ -84,8 +131,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/chat/cmd"]
     environment:
-      - PORT=8009
-      - SERVICE_NAME=chat-service
+      <<: *common-env
+      PORT: 8009
+      SERVICE_NAME: chat-service
     ports:
       - "8009:8009"
 
@@ -93,8 +141,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/search/cmd"]
     environment:
-      - PORT=8010
-      - SERVICE_NAME=search-service
+      <<: *common-env
+      PORT: 8010
+      SERVICE_NAME: search-service
     ports:
       - "8010:8010"
 
@@ -102,8 +151,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/notification/cmd"]
     environment:
-      - PORT=8011
-      - SERVICE_NAME=notification-service
+      <<: *common-env
+      PORT: 8011
+      SERVICE_NAME: notification-service
     ports:
       - "8011:8011"
 
@@ -111,8 +161,9 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/moderation/cmd"]
     environment:
-      - PORT=8012
-      - SERVICE_NAME=moderation-service
+      <<: *common-env
+      PORT: 8012
+      SERVICE_NAME: moderation-service
     ports:
       - "8012:8012"
 
@@ -120,7 +171,14 @@ services:
     <<: *go-service
     command: ["go", "run", "./services/analytics/cmd"]
     environment:
-      - PORT=8013
-      - SERVICE_NAME=analytics-service
+      <<: *common-env
+      PORT: 8013
+      SERVICE_NAME: analytics-service
     ports:
       - "8013:8013"
+
+volumes:
+  pgdata:
+  redisdata:
+  go-mod-cache:
+  go-build-cache:

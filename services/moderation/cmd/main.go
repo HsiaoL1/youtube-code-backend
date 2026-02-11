@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 
+	"github.com/gofiber/fiber/v2"
+
 	"youtube-code-backend/pkg/common/config"
 	"youtube-code-backend/pkg/common/server"
 	"youtube-code-backend/services/moderation/internal/router"
@@ -15,7 +17,9 @@ func main() {
 	}
 
 	log.Printf("starting %s on :%d", cfg.ServiceName, cfg.Port)
-	if err := server.Run(cfg, router.Register); err != nil {
+	if err := server.Run(cfg, func(api fiber.Router, res *server.Resources) {
+		router.Register(api, res.DB, res.JWTManager)
+	}); err != nil {
 		log.Fatalf("service stopped: %v", err)
 	}
 }
