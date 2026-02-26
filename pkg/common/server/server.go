@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -107,6 +108,22 @@ func Run(cfg config.AppConfig, register RegisterRoutes) error {
 	api := app.Group("/api/v1")
 	register(api, res)
 
+	// Common per-service metadata endpoints.
+	serviceKey := serviceRouteKey(cfg.ServiceName)
+	api.Get(fmt.Sprintf("/%s/ping", serviceKey), func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"service": cfg.ServiceName,
+			"status":  "ok",
+		})
+	})
+	api.Get(fmt.Sprintf("/%s/todo", serviceKey), func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"service": cfg.ServiceName,
+			"status":  "implemented",
+			"items":   []string{},
+		})
+	})
+
 	return app.Listen(fmt.Sprintf(":%d", cfg.Port))
 }
 
@@ -121,4 +138,8 @@ func globalErrorHandler(c *fiber.Ctx, err error) error {
 		Success: false,
 		Error:   errors.ErrInternal,
 	})
+}
+
+func serviceRouteKey(serviceName string) string {
+	return strings.TrimSuffix(strings.ToLower(serviceName), "-service")
 }
