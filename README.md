@@ -130,7 +130,34 @@ Each service exposes:
 ## Quick start
 1. Install deps:
    `go mod tidy`
-2. Run one service:
+2. Start local infra (PostgreSQL/MySQL/MongoDB/Redis):
+   `make infra-up`
+3. Check infra status:
+   `make infra-ps`
+4. Run one service:
    `make run-video`
-3. Format and test:
+5. Format and test:
    `make fmt && make test`
+
+## Local infrastructure defaults
+- PostgreSQL
+  - Host: `127.0.0.1`
+  - Port: `5432`
+  - DB/User/Password: `youtube / youtube / youtube`
+  - DSN: `host=127.0.0.1 user=youtube password=youtube dbname=youtube port=5432 sslmode=disable`
+- MySQL
+  - Host: `127.0.0.1`
+  - Port: `3306`
+  - DB/User/Password: `youtube / dev / dev`
+  - Root password: `root`
+  - DSN: `dev:dev@tcp(127.0.0.1:3306)/youtube?charset=utf8mb4&parseTime=True&loc=Local`
+- MongoDB
+  - Host: `127.0.0.1`
+  - Port: `27017`
+  - Root user/password: `dev / dev`
+  - URI: `mongodb://dev:dev@127.0.0.1:27017/youtube?authSource=admin`
+- Redis
+  - Host: `127.0.0.1`
+  - Port: `6379`
+  - Password: empty
+  - URL: `redis://127.0.0.1:6379/0`

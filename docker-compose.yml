@@ -1,7 +1,7 @@
-version: "3.9"
-
 x-common-env: &common-env
   DB_DSN: "host=postgres user=youtube password=youtube dbname=youtube port=5432 sslmode=disable"
+  MYSQL_DSN: "dev:dev@tcp(mysql:3306)/youtube?charset=utf8mb4&parseTime=True&loc=Local"
+  MONGO_URI: "mongodb://dev:dev@mongo:27017/youtube?authSource=admin"
   REDIS_ADDR: "redis:6379"
   JWT_SECRET: "dev-secret-change-in-production"
 
@@ -46,6 +46,40 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  mysql:
+    image: mysql:8.4
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: youtube
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: dev
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dev
+      MONGO_INITDB_ROOT_PASSWORD: dev
+      MONGO_INITDB_DATABASE: youtube
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --host 127.0.0.1 --username dev --password dev --authenticationDatabase admin --eval \"db.adminCommand({ ping: 1 })\" --quiet"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   identity:
     <<: *go-service
@@ -180,5 +214,7 @@ services:
 volumes:
   pgdata:
   redisdata:
+  mysqldata:
+  mongodata:
   go-mod-cache:
   go-build-cache:

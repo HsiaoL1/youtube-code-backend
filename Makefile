@@ -1,4 +1,4 @@
-.PHONY: fmt test run-all \
+.PHONY: fmt test run-all infra-up infra-down infra-logs infra-ps \
 	run-identity run-user-channel run-video run-media run-social-graph run-feed-reco run-comment run-live run-chat run-search run-notification run-moderation run-analytics
 
 fmt:
@@ -6,6 +6,18 @@ fmt:
 
 test:
 	go test ./...
+
+infra-up:
+	docker compose up -d postgres mysql mongo redis
+
+infra-down:
+	docker compose stop postgres mysql mongo redis
+
+infra-logs:
+	docker compose logs -f postgres mysql mongo redis
+
+infra-ps:
+	docker compose ps postgres mysql mongo redis
 
 run-identity:
 	go run ./services/identity/cmd
